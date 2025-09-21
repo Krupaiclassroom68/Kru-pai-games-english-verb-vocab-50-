@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verb Quiz 50 • Kru Pai Classroom</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#FFF9F4;
+      --card:#FFFFFF;
+      --ink:#1A1A1A;
+      --muted:#666;
+      --brand:#E76F51;
+      --accent:#F4A261;
+      --ok:#2ECC71;
+      --bad:#E74C3C;
+      --shadow: 0 8px 22px rgba(0,0,0,.08);
+      --radius: 20px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font-family: "Prompt", sans-serif;
+      display:flex; justify-content:center; min-height:100vh; padding:24px;
+    }
+    .app{width:min(980px,100%);}
+    .brand{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:18px; }
+    .logo{ width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg,var(--brand),#F4A261); box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center; color:white; font:700 26px Fredoka; }
+    .title{ font:700 26px "Fredoka", sans-serif; color:var(--brand) }
+    .card{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:26px; }
+    .card.hero{text-align:center;}
+    h1{ font:700 clamp(22px,4.2vw,34px) "Fredoka"; margin:6px 0 10px; color:var(--brand) }
+    p.lead{ color:var(--muted); font-size:18px }
+    input[type=text]{ width:100%; padding:16px; border-radius:14px; border:2px solid #E2E8F0; font-size:18px; }
+    input[type=text]:focus{ border-color:var(--brand); outline:none; }
+    .btn{ cursor:pointer; border:none; border-radius:14px; padding:14px 20px; font:700 18px "Fredoka"; transition:.2s }
+    .btn.primary{ background:linear-gradient(135deg,var(--brand),#F4A261); color:white; box-shadow:0 6px 15px rgba(231,111,81,.3) }
+    .btn.primary:hover{ transform:translateY(-2px) }
+    .btn.secondary{ background:#fff; color:var(--brand); border:2px solid var(--brand) }
+    .q-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; flex-wrap:wrap; }
+    .badge{ background:#FFF1EA; color:var(--brand); padding:6px 12px; border-radius:999px; font-weight:600 }
+    .progress{ height:12px; background:#EEE; border-radius:999px; margin:10px 0; overflow:hidden }
+    .bar{ height:100%; width:0%; background:linear-gradient(90deg,var(--accent),#F6C78F); transition: width .4s ease }
+    .timer{ font:700 18px Fredoka; color:var(--accent) }
+    .thai{ font:700 clamp(22px,6vw,40px) "Fredoka"; text-align:center; margin:12px 0 2px; color:#B34F35 }
+    .sub{ text-align:center; color:#8a8a8a; margin-bottom:10px }
+    .choices{ display:grid; gap:12px; grid-template-columns: 1fr; }
+    @media(min-width:640px){ .choices{ grid-template-columns:1fr 1fr; } }
+    .choice{ padding:14px; border:2px solid #EEE; border-radius:14px; font:700 18px "Prompt"; cursor:pointer; transition:.15s; background:#fff }
+    .choice:hover{ transform:translateY(-1px) }
+    .choice.correct{ border-color:var(--ok); background:#E9F9F0 }
+    .choice.wrong{ border-color:var(--bad); background:#FDEDEC }
+    .scoreBig{ font:800 clamp(28px,7vw,48px) "Fredoka"; color:var(--accent); text-align:center; margin:10px 0 0; }
+    .brandfoot{text-align:center; margin-top:18px; font-size:14px; color:#888 }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="brand">
+    <div class="logo">KP</div>
+    <div class="title">Kru Pai Classroom</div>
+  </div>
+
+  <section id="start" class="card hero">
+    <h1>⚡ Verb Quiz 50 – Thai → English</h1>
+    <p class="lead">ลงชื่อ แล้วเริ่มเลย! ข้อละ <b>10 วินาที</b> เลือกคำกริยาภาษาอังกฤษที่ตรงกับคำไทย</p>
+    <input id="playerName" type="text" placeholder="พิมพ์ชื่อเล่นของคุณ" />
+    <br><br>
+    <button class="btn primary" onclick="goMenu()">▶️ เริ่ม</button>
+  </section>
+
+  <section id="game" class="card" style="display:none">
+    <div class="q-head">
+      <span class="badge" id="helloBadge">สวัสดี 🌟</span>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <span class="badge" id="progressText">ข้อ 1/50</span>
+        <span class="timer" id="timer">⏱️ 10</span>
+        <button class="btn secondary" onclick="resetAll()">🔁 เริ่มใหม่</button>
+      </div>
+    </div>
+
+    <div id="thaiWord" class="thai">…</div>
+    <div class="sub">เลือกคำตอบที่ถูกต้อง</div>
+    <div id="choices" class="choices"></div>
+  </section>
+
+  <section id="result" class="card" style="display:none; text-align:center">
+    <div class="scoreBig" id="scoreBig">คะแนนรวม</div>
+    <p id="summary"></p>
+    <br>
+    <button class="btn primary" onclick="resetAll()">🔁 เล่นใหม่</button>
+    <div class="brandfoot">© Kru Pai Classroom</div>
+  </section>
+</div>
+
+<script>
+// Dataset: 50 Thai→English verbs
+const DATA = [
+  { th:"นอน", en:"sleep" },
+  { th:"กิน", en:"eat" },
+  { th:"ดื่ม", en:"drink" },
+  { th:"ไป", en:"go" },
+  { th:"มา", en:"come" },
+  { th:"ดู", en:"watch" },
+  { th:"เห็น", en:"see" },
+  { th:"ได้ยิน", en:"hear" },
+  { th:"พูด", en:"speak" },
+  { th:"บอก", en:"tell" },
+  { th:"ถาม", en:"ask" },
+  { th:"ตอบ", en:"answer" },
+  { th:"อ่าน", en:"read" },
+  { th:"เขียน", en:"write" },
+  { th:"เปิด", en:"open" },
+  { th:"ปิด", en:"close" },
+  { th:"วิ่ง", en:"run" },
+  { th:"เดิน", en:"walk" },
+  { th:"นั่ง", en:"sit" },
+  { th:"ยืน", en:"stand" },
+  { th:"ซื้อ", en:"buy" },
+  { th:"ขาย", en:"sell" },
+  { th:"สอน", en:"teach" },
+  { th:"เรียน/ศึกษา", en:"study" },
+  { th:"ช่วย", en:"help" },
+  { th:"ทำความสะอาด", en:"clean" },
+  { th:"ทำอาหาร", en:"cook" },
+  { th:"ขับรถ", en:"drive" },
+  { th:"ขี่", en:"ride" },
+  { th:"คิด", en:"think" },
+  { th:"จำ", en:"remember" },
+  { th:"ลืม", en:"forget" },
+  { th:"รู้", en:"know" },
+  { th:"เข้าใจ", en:"understand" },
+  { th:"ชอบ", en:"like" },
+  { th:"รัก", en:"love" },
+  { th:"เกลียด", en:"hate" },
+  { th:"รอ", en:"wait" },
+  { th:"หวัง", en:"hope" },
+  { th:"เริ่ม", en:"start" },
+  { th:"จบ/เสร็จ", en:"finish" },
+  { th:"ทำงาน", en:"work" },
+  { th:"พักผ่อน", en:"rest" },
+  { th:"อาบน้ำ", en:"shower" },
+  { th:"แปรงฟัน", en:"brush" },
+  { th:"ซักผ้า", en:"wash" },
+  { th:"โทรศัพท์", en:"call" },
+  { th:"ฟัง", en:"listen" },
+  { th:"ร้องเพลง", en:"sing" },
+  { th:"ว่ายน้ำ", en:"swim" }
+];
+
+// Utility
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+const el = {
+  start: document.getElementById('start'),
+  game: document.getElementById('game'),
+  result: document.getElementById('result'),
+  playerName: document.getElementById('playerName'),
+  helloBadge: document.getElementById('helloBadge'),
+  progressText: document.getElementById('progressText'),
+  timer: document.getElementById('timer'),
+  thaiWord: document.getElementById('thaiWord'),
+  choices: document.getElementById('choices'),
+  scoreBig: document.getElementById('scoreBig'),
+  summary: document.getElementById('summary')
+};
+
+let order = [];      // randomized question order
+let idx = 0;         // current index in order
+let score = 0;
+let interval;
+let timeLeft = 10;
+
+function goMenu(){
+  const name = el.playerName.value.trim();
+  if(!name){ alert('กรุณากรอกชื่อ'); return; }
+  el.start.style.display='none';
+  el.game.style.display='block';
+  el.helloBadge.textContent = `สวัสดี, ${name} ✨`;
+  startGame();
+}
+
+function resetAll(){
+  clearInterval(interval);
+  el.playerName.value='';
+  el.result.style.display='none';
+  el.game.style.display='none';
+  el.start.style.display='block';
+}
+
+function startGame(){
+  order = Array.from(DATA.keys());
+  shuffle(order);
+  idx = 0; score = 0;
+  loadQuestion();
+}
+
+function loadQuestion(){
+  clearInterval(interval);
+  timeLeft = 10;
+  el.timer.textContent = `⏱️ ${timeLeft}`;
+
+  const qIndex = order[idx];
+  const item = DATA[qIndex];
+  el.progressText.textContent = `ข้อ ${idx+1}/${DATA.length}`;
+  el.thaiWord.textContent = item.th;
+
+  // build options: correct + 3 random incorrect
+  const others = DATA.filter((_,i)=>i!==qIndex).map(x=>x.en);
+  shuffle(others);
+  const options = shuffle([ item.en, ...others.slice(0,3) ]);
+
+  el.choices.innerHTML='';
+  options.forEach(opt=>{
+    const b=document.createElement('button');
+    b.className='choice';
+    b.textContent=opt;
+    b.onclick=()=>submit(opt, item.en, b);
+    el.choices.appendChild(b);
+  });
+
+  // timer
+  interval = setInterval(()=>{
+    timeLeft--;
+    el.timer.textContent = `⏱️ ${timeLeft}`;
+    if(timeLeft<=0){
+      clearInterval(interval);
+      lockChoices(item.en, null); // time out = wrong
+      nextAfterDelay();
+    }
+  },1000);
+}
+
+function submit(ans, correct, btn){
+  clearInterval(interval);
+  const isCorrect = ans===correct;
+  if(isCorrect){ score++; btn.classList.add('correct'); }
+  else{ btn.classList.add('wrong'); }
+  lockChoices(correct, btn);
+  nextAfterDelay();
+}
+
+function lockChoices(correct, clickedBtn){
+  const all=[...el.choices.querySelectorAll('.choice')];
+  all.forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===correct) b.classList.add('correct');
+  });
+}
+
+function nextAfterDelay(){
+  setTimeout(()=>{
+    idx++;
+    if(idx>=DATA.length){ finish(); }
+    else{ loadQuestion(); }
+  }, 800);
+}
+
+function finish(){
+  el.game.style.display='none';
+  el.result.style.display='block';
+  el.scoreBig.textContent = `คุณได้ ${score}/${DATA.length} คะแนน`;
+  const pct = Math.round((score/DATA.length)*100);
+  el.summary.textContent = `คิดเป็น ${pct}% เกณฑ์แนะนำ: ≥ 80% เยี่ยมมาก!`;
+}
+</script>
+</body>
+</html>
